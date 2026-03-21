@@ -19,17 +19,17 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r CI_CD/requirements.txt
 
       - name: Run weather update script
         env:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-        run: python update_weather.py
+        run: python CI_CD/update_weather.py
 
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md
+          git add CI_CD/README.md
           git diff --cached --quiet || git commit -m "Mise à jour automatique de la météo"
           git push
