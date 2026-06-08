@@ -2,3 +2,7 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+nlp_env/
+venv/
+venv311/
+env/
