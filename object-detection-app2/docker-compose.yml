@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: object_detection_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app:/app/app
+    command: streamlit run app/main.py --server.address=0.0.0.0 --server.port=8501

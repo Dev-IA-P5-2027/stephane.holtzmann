@@ -9,6 +9,9 @@ jobs:
   update-weather:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,10 +29,4 @@ jobs:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
         run: python CI_CD/update_weather.py
 
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add CI_CD/README.md
-          git diff --cached --quiet || git commit -m "Mise à jour automatique de la météo"
-          git push
+      

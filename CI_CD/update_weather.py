@@ -1,100 +1,109 @@
 import os
-from datetime import datetime
+from pathlib import Path
+from datetime import datetime, UTC
 
 import requests
 
-API_KEY = os.environ.get("OPENWEATHER_API_KEY")
+# =========================
+# CONFIG
+# =========================
+
+API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
+CITIES = [
+    "Paris",
+    "London",
+    "New York",
+    "Tokyo",
+    "Sydney"
+]
+
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
-CITIES = ["Paris", "London", "New York", "Tokyo", "Sydney"]
 
+# Chemin absolu vers le dossier du script
+SCRIPT_DIR = Path(__file__).resolve().parent
+README_PATH = SCRIPT_DIR / "README.md"
 
-def get_weather_emoji(condition):
-    emojis = {
-        "Clear": "☀️",
-        "Clouds": "☁️",
-        "Rain": "🌧️",
-        "Drizzle": "🌦️",
-        "Thunderstorm": "⛈️",
-        "Snow": "❄️",
-        "Mist": "🌫️",
-        "Fog": "🌫️",
-        "Haze": "🌫️",
-    }
-    return emojis.get(condition, "🌡️")
+# =========================
+# CHECK API KEY
+# =========================
 
+if not API_KEY:
+    raise ValueError("ERREUR : OPENWEATHER_API_KEY non définie !")
 
-def get_weather(city):
-    params = {
-        "q": city,
-        "appid": API_KEY,
-        "units": "metric",
-        "lang": "fr",
-    }
+# =========================
+# FETCH WEATHER
+# =========================
 
+def get_weather(city: str) -> str:
     try:
-        response = requests.get(BASE_URL, params=params, timeout=15)
-        response.raise_for_status()
-        data = response.json()
-
-        return {
-            "city": city,
-            "temp": round(data["main"]["temp"], 1),
-            "feels_like": round(data["main"]["feels_like"], 1),
-            "humidity": data["main"]["humidity"],
-            "description": data["weather"][0]["description"],
-            "wind": round(data["wind"]["speed"] * 3.6, 1),
-            "icon": get_weather_emoji(data["weather"][0]["main"]),
+        params = {
+            "q": city,
+            "appid": API_KEY,
+            "units": "metric",
+            "lang": "fr"
         }
+
+        response = requests.get(BASE_URL, params=params, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        temp = data["main"]["temp"]
+
+        return f"{city}: {temp:.1f}°C"
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Erreur réseau/API pour {city} : {e}")
+        return f"{city}: erreur"
+
+    except KeyError as e:
+        print(f"❌ Réponse API inattendue pour {city} : clé manquante {e}")
+        return f"{city}: erreur"
+
     except Exception as e:
-        print(f"Erreur pour {city}: {e}")
-        return None
+        print(f"❌ Exception pour {city} : {e}")
+        return f"{city}: erreur"
 
+# =========================
+# GENERATE README
+# =========================
 
-def generate_readme(weather_data):
-    now = datetime.utcnow().strftime("%d/%m/%Y à %H:%M UTC")
+def generate_readme(weather_data: list[str]) -> None:
+    now = datetime.now(UTC).strftime("%d/%m/%Y à %H:%M UTC")
 
-    readme = f"""# Dashboard Météo - CI/CD 🌤️
+    content = f"# 🌍 Weather Dashboard\n\n"
+    content += f"## 📅 Dernière mise à jour\n{now}\n\n"
+    content += "## 🌡️ Températures actuelles\n\n"
 
-> Ce README est mis à jour automatiquement par GitHub Actions.
+    for line in weather_data:
+        content += f"- {line}\n"
 
-## Météo actuelle - {now}
+    content += "\n---\n"
+    content += "_Mise à jour automatique via GitHub Actions._\n"
 
-| Ville | Météo | Temp | Ressenti | Humidité | Vent |
-|------|------|------|----------|----------|------|
-"""
+    with open(README_PATH, "w", encoding="utf-8") as f:
+        f.write(content)
 
-    for w in weather_data:
-        if w:
-            readme += (
-                f"| {w['icon']} {w['city']} "
-                f"| {w['description'].capitalize()} "
-                f"| {w['temp']}°C "
-                f"| {w['feels_like']}°C "
-                f"| {w['humidity']}% "
-                f"| {w['wind']} km/h |\n"
-            )
+# =========================
+# MAIN
+# =========================
 
-    return readme
-
-
-if __name__ == "__main__":
-    if not API_KEY:
-        print("ERREUR : OPENWEATHER_API_KEY non définie !")
-        raise SystemExit(1)
-
+def main() -> None:
     print("Récupération des données météo...")
-    weather_data = []
+
+    weather_results = []
 
     for city in CITIES:
-        data = get_weather(city)
-        weather_data.append(data)
-        if data:
-            print(f"{city}: {data['temp']}°C")
+        result = get_weather(city)
+        print(result)
+        weather_results.append(result)
 
     print("Génération du README...")
-    readme_content = generate_readme(weather_data)
+    generate_readme(weather_results)
 
-    with open("README.md", "w", encoding="utf-8") as f:
-        f.write(readme_content)
+    print(f"README.md mis à jour avec succès : {README_PATH}")
 
-    print("README.md mis à jour avec succès !")
+# =========================
+
+if __name__ == "__main__":
+    main()
