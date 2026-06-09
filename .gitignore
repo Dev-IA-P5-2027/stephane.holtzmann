@@ -9,3 +9,5 @@ __pycache__/
 .ipynb_checkpoints/
 Thumbs.db
 .DS_Store
+# Microsoft Office temporary files
+~$*
