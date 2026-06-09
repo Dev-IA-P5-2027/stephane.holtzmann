@@ -1,9 +1,11 @@
-﻿.venv/
+﻿venv/
+env/
+nlp_env/
+*/venv/
+*/env/
+*/nlp_env/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-nlp_env/
-venv/
-venv311/
-env/
-piscine_python/
+Thumbs.db
+.DS_Store
